@@ -9,7 +9,7 @@ import numpy as np
 base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
 options = vision.HandLandmarkerOptions(
     base_options=base_options,
-    num_hands=2,
+    num_hands=1,
     min_hand_detection_confidence=0.7
 )
 hand_landmarker = vision.HandLandmarker.create_from_options(options)
@@ -25,11 +25,14 @@ def classify_hand_posture(landmarks):
     Returns a tuple: (posture, thumb_pointing, index_pointing)
     """
     def is_finger_extended(tip_idx, pip_idx):
-        """Check if finger is extended by comparing tip position with PIP"""
+        """Check if finger is extended by comparing tip position with PIP (vertical)"""
         return landmarks[tip_idx].y < landmarks[pip_idx].y
     
+    def is_thumb_extended(tip_idx, pip_idx):
+        """Check if thumb is extended by comparing horizontal distance (thumb extends sideways)"""
+        return landmarks[tip_idx].x < landmarks[pip_idx].x
+    
     # Check if fingers are extended
-    thumb_extended = is_finger_extended(4, 3)
     index_extended = is_finger_extended(8, 6)
     middle_extended = is_finger_extended(12, 10)
     ring_extended = is_finger_extended(16, 14)
@@ -41,12 +44,14 @@ def classify_hand_posture(landmarks):
     # Determine if hand is open or closed
     if extended_count >= 3:
         posture = "Open"
+        thumb_pointing = False
+        index_pointing = False
     else:
         posture = "Closed"
-    
-    # Check if thumb or index is pointing out significantly
-    thumb_pointing = thumb_extended
-    index_pointing = index_extended and extended_count <= 1  # Only if index is isolated
+        # Only check pointing when hand is closed
+        thumb_extended = is_thumb_extended(4, 3)
+        thumb_pointing = thumb_extended
+        index_pointing = index_extended and extended_count <= 1  # Only if index is isolated
     
     return posture, thumb_pointing, index_pointing
 
@@ -124,6 +129,10 @@ while cap.isOpened():
     # Process detected hands
     if results.hand_landmarks and results.handedness:
         for hand_landmarks, handedness in zip(results.hand_landmarks, results.handedness):
+            # Only process right hand (camera mirror means API returns "Left" for actual right hand)
+            if handedness[0].category_name != "Left":
+                continue
+            
             # Classify posture
             posture, thumb_pointing, index_pointing = classify_hand_posture(hand_landmarks)
             tilt_angle = get_hand_tilt_angle(hand_landmarks)
@@ -136,7 +145,6 @@ while cap.isOpened():
             draw_landmarks(frame, hand_landmarks)
             
             # Build label with hand info
-            hand_label = handedness[0].category_name
             pointing_info = ""
             if thumb_pointing:
                 pointing_info += "Thumb "
@@ -146,7 +154,7 @@ while cap.isOpened():
                 pointing_info = f" ({pointing_info.strip()})"
             
             # Display posture label
-            label = f"{hand_label}: {posture}{pointing_info}"
+            label = f"Right: {posture}{pointing_info}"
             cv2.putText(frame, label, (hand_center_x - 60, hand_center_y - 40),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
             
