@@ -1,0 +1,12 @@
+#N canvas 827 239 527 327 12;
+#X obj 254 192 netreceive -u -l 9999;
+#X obj 254 246 oscparse;
+#X obj 254 295 route /pitch /timbre;
+#X obj 254 459 dac~;
+#X obj 254 406 *~ 0.5;
+#X obj 254 357 osc~ 440;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
+#X connect 2 0 5 0;
+#X connect 4 0 3 0;
+#X connect 5 0 4 0;
