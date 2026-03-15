@@ -71,6 +71,7 @@ def get_hand_tilt_angle(landmarks):
     # Calculate angle in radians then convert to degrees
     angle_rad = math.atan2(dy, dx)
     angle_deg = math.degrees(angle_rad)
+    angle_deg -= 90  # Adjust so 0 is vertical, positive is tilted right
     
     # Convert to -90 to 90 range (0 = vertical, positive = tilted right)
     if angle_deg > 90:
