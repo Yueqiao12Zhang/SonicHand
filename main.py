@@ -83,7 +83,7 @@ try:
         results = hand_landmarker.detect(mp_image)
         
         # --- READ ARDUINO DISTANCE DATA ---
-        raw_distance, smoothed_distance, normalized_pitch = arduino.read_distance()
+        # raw_distance, smoothed_distance, normalized_pitch = arduino.read_distance()
         
         # Default values
         hand_detected = False
@@ -114,15 +114,15 @@ try:
                 # Draw landmarks
                 draw_landmarks(frame, hand_landmarks)
                 
-                # --- SEND OSC MESSAGES ---
-                if normalized_pitch is not None:
-                    osc.send_all(
-                        pitch=normalized_pitch,
-                        mode=gesture_mode,
-                        tilt_roll=tilt_roll,
-                        tilt_pitch=tilt_pitch,
-                        volume=1.0  # Hand detected, full volume
-                    )
+                # # --- SEND OSC MESSAGES ---
+                # if normalized_pitch is not None:
+                #     osc.send_all(
+                #         pitch=normalized_pitch,
+                #         mode=gesture_mode,
+                #         tilt_roll=tilt_roll,
+                #         tilt_pitch=tilt_pitch,
+                #         volume=1.0  # Hand detected, full volume
+                #     )
                 
                 # --- DISPLAY ON-SCREEN INFO ---
                 gesture_name = GESTURE_MODES[gesture_mode]
@@ -130,10 +130,10 @@ try:
                            (hand_center_x - 100, hand_center_y - 60),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 
-                if smoothed_distance is not None:
-                    cv2.putText(frame, f"Distance: {smoothed_distance:.1f}cm ({normalized_pitch:.2f})", 
-                               (hand_center_x - 100, hand_center_y - 35),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 200, 0), 2)
+                # if smoothed_distance is not None:
+                #     cv2.putText(frame, f"Distance: {smoothed_distance:.1f}cm ({normalized_pitch:.2f})", 
+                #                (hand_center_x - 100, hand_center_y - 35),
+                #                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 200, 0), 2)
                 
                 cv2.putText(frame, f"Roll: {tilt_roll:.1f}° | Pitch: {tilt_pitch:.1f}°", 
                            (hand_center_x - 100, hand_center_y - 10),

@@ -34,10 +34,10 @@ class GestureClassifier:
         thumb_mcp = landmarks[2]
         thumb_tip = landmarks[4]
         # Thumb is extended if tip is far from MCP horizontally
-        horizontal_dist = abs(thumb_tip.x - thumb_mcp.x)
-        vertical_dist = abs(thumb_tip.y - thumb_mcp.y)
+        horizontal_dist = thumb_tip.x - thumb_mcp.x
+        vertical_dist = thumb_tip.y - thumb_mcp.y
         # Extended if horizontal distance > vertical (sideways extension)
-        return horizontal_dist > vertical_dist * 1.5
+        return horizontal_dist < 0 and vertical_dist < self.extended_threshold  # Right hand, thumb extends left
     
     def classify_posture(self, landmarks):
         """

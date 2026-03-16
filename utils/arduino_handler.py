@@ -60,20 +60,32 @@ class ArduinoHandler:
         
         try:
             if self.ser.in_waiting:
-                line = self.ser.readline().decode('utf-8').strip()
-                if line:
+                # Read raw bytes and decode with error handling
+                raw_line = self.ser.readline()
+                
+                # Try to decode, ignoring invalid bytes
+                line = raw_line.decode('utf-8', errors='ignore').strip()
+                
+                # Filter out non-numeric strings and empty lines
+                if line and line.replace('.', '', 1).isdigit():
                     distance_cm = float(line)
-                    # Add to buffer for smoothing
-                    self.distance_buffer.append(distance_cm)
                     
-                    # Calculate smoothed value
-                    smoothed_distance = sum(self.distance_buffer) / len(self.distance_buffer)
-                    
-                    # Normalize to 0.0-1.0 based on 5-50cm range
-                    normalized = (smoothed_distance - self.min_distance) / (self.max_distance - self.min_distance)
-                    normalized = max(0.0, min(1.0, normalized))  # Clamp to [0, 1]
-                    
-                    return distance_cm, smoothed_distance, normalized
+                    # Validate distance is in reasonable range
+                    if 5 <= distance_cm <= 100:
+                        # Add to buffer for smoothing
+                        self.distance_buffer.append(distance_cm)
+                        
+                        # Calculate smoothed value
+                        smoothed_distance = sum(self.distance_buffer) / len(self.distance_buffer)
+                        
+                        # Normalize to 0.0-1.0 based on 5-50cm range
+                        normalized = (smoothed_distance - self.min_distance) / (self.max_distance - self.min_distance)
+                        normalized = max(0.0, min(1.0, normalized))  # Clamp to [0, 1]
+                        
+                        return distance_cm, smoothed_distance, normalized
+        except (ValueError, UnicodeDecodeError):
+            # Skip invalid data silently (happens with serial noise)
+            pass
         except Exception as e:
             print(f"✗ Error reading from Arduino: {e}")
         
