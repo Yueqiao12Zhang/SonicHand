@@ -1,8 +1,8 @@
-#define TRIG_PIN 9
-#define ECHO_PIN 10
+#define TRIG_PIN 10
+#define ECHO_PIN 9
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 }
@@ -15,7 +15,8 @@ void loop() {
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
   
-  duration = pulseIn(ECHO_PIN, HIGH);
+  // Cap timeout so missed echoes do not block the loop for 1 second.
+  duration = pulseIn(ECHO_PIN, HIGH, 30000);
   distance = (duration / 2) / 29.1; // Convert to cm
 
   if (distance > 0 && distance < 100) {

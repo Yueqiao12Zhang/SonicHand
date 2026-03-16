@@ -66,7 +66,7 @@ class OSCManager:
         smoothed_roll = sum(self.tilt_roll_buffer) / len(self.tilt_roll_buffer)
         
         # Map from -90 to 90 degrees to 0.0 to 1.0
-        vibrato_value = (smoothed_roll + 90) / 180.0
+        vibrato_value = abs(smoothed_roll) / 60
         vibrato_value = max(0.0, min(1.0, vibrato_value))
         
         self.client.send_message('/synth/vibrato', vibrato_value)

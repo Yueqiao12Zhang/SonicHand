@@ -9,7 +9,7 @@ from collections import deque
 class ArduinoHandler:
     """Manages serial communication with Arduino and distance sensor data."""
     
-    def __init__(self, port='/dev/cu.usbserial-1130', baudrate=9600, timeout=1, smooth_window=5):
+    def __init__(self, port='/dev/cu.usbserial-1130', baudrate=115200, timeout=0.02, smooth_window=5):
         """
         Initialize Arduino serial connection.
         
@@ -39,6 +39,7 @@ class ArduinoHandler:
         try:
             self.ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
             time.sleep(2)  # Wait for Arduino to initialize
+            self.ser.reset_input_buffer()  # Drop startup noise / stale lines
             self.is_connected = True
             print(f"✓ Connected to Arduino on {self.port}")
             return True
@@ -60,29 +61,34 @@ class ArduinoHandler:
             return None, None, None
         
         try:
-            if self.ser.in_waiting:
-                # Read raw bytes and decode with error handling
+            # Drain all queued serial lines and keep the newest valid reading.
+            # This prevents seconds of lag when producer (Arduino) is faster than consumer loop.
+            latest_distance = None
+            while self.ser.in_waiting:
                 raw_line = self.ser.readline()
-                
-                # Try to decode, ignoring invalid bytes
                 line = raw_line.decode('utf-8', errors='ignore').strip()
-                
-                # Filter out non-numeric strings and empty lines
-                if line and line.replace('.', '', 1).isdigit():
-                    distance_cm = float(line)
-                    
+
+                if line:
+                    try:
+                        distance_cm = float(line)
+                    except ValueError:
+                        continue
+
                     if 5 <= distance_cm <= 100:
-                        # Add to buffer for smoothing
-                        self.distance_buffer.append(distance_cm)
-                        
-                        # Calculate smoothed value
-                        smoothed_distance = sum(self.distance_buffer) / len(self.distance_buffer)
-                        
-                        # Normalize to 0.0-1.0 based on 5-50cm range
-                        normalized = (smoothed_distance - self.min_distance) / (self.max_distance - self.min_distance)
-                        normalized = max(0.0, min(1.0, normalized))  # Clamp to [0, 1]
-                        
-                        return distance_cm, smoothed_distance, normalized
+                        latest_distance = distance_cm
+
+            if latest_distance is not None:
+                # Add to buffer for smoothing
+                self.distance_buffer.append(latest_distance)
+
+                # Calculate smoothed value
+                smoothed_distance = sum(self.distance_buffer) / len(self.distance_buffer)
+
+                # Normalize to 0.0-1.0 based on 5-50cm range
+                normalized = (smoothed_distance - self.min_distance) / (self.max_distance - self.min_distance)
+                normalized = max(0.0, min(1.0, normalized))  # Clamp to [0, 1]
+
+                return latest_distance, smoothed_distance, normalized
         except (ValueError, UnicodeDecodeError):
             # Skip invalid data silently (happens with serial noise)
             pass
