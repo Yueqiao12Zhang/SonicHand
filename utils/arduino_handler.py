@@ -17,7 +17,8 @@ class ArduinoHandler:
             port: Serial port (e.g., '/dev/cu.usbserial-1130' on macOS, 'COM3' on Windows)
             baudrate: Serial communication speed
             timeout: Serial read timeout
-            smooth_window: Moving average window size for smoothing
+            smooth_window: Moving average window size for smoothing (default 2 for fast response)
+                          Use 3-5 for smoother but slower response
         """
         self.ser = None
         self.port = port
@@ -26,7 +27,7 @@ class ArduinoHandler:
         self.smooth_window = smooth_window
         self.distance_buffer = deque(maxlen=smooth_window)
         self.min_distance = 5.0  # cm
-        self.max_distance = 50.0  # cm
+        self.max_distance = 50.0  # cm (wider range = more responsive)
         self.is_connected = False
     
     def connect(self):
@@ -70,7 +71,6 @@ class ArduinoHandler:
                 if line and line.replace('.', '', 1).isdigit():
                     distance_cm = float(line)
                     
-                    # Validate distance is in reasonable range
                     if 5 <= distance_cm <= 100:
                         # Add to buffer for smoothing
                         self.distance_buffer.append(distance_cm)

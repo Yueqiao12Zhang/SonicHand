@@ -26,6 +26,7 @@ class OSCManager:
         self.tilt_pitch_buffer = deque(maxlen=tilt_smooth_window)
         self.last_mode = None
         self.last_volume = None
+        self.last_debug_print_time = 0.0
         print(f"✓ OSC Manager initialized: {ip}:{port}")
     
     def send_pitch(self, value):
@@ -50,6 +51,7 @@ class OSCManager:
         if gesture_state != self.last_mode:
             self.client.send_message('/synth/mode', gesture_state)
             self.last_mode = gesture_state
+
     
     def send_vibrato(self, tilt_roll):
         """
@@ -69,23 +71,23 @@ class OSCManager:
         
         self.client.send_message('/synth/vibrato', vibrato_value)
     
-    def send_expression(self, tilt_pitch):
-        """
-        Send expression control based on hand pitch (forward/backward tilt).
-        Applies smoothing and maps to 0.0-1.0 range.
+    # def send_expression(self, tilt_pitch):
+    #     """
+    #     Send expression control based on hand pitch (forward/backward tilt).
+    #     Applies smoothing and maps to 0.0-1.0 range.
         
-        Args:
-            tilt_pitch: float in degrees (-90 to 90)
-        """
-        # Add to buffer for smoothing
-        self.tilt_pitch_buffer.append(tilt_pitch)
-        smoothed_pitch = sum(self.tilt_pitch_buffer) / len(self.tilt_pitch_buffer)
+    #     Args:
+    #         tilt_pitch: float in degrees (-90 to 90)
+    #     """
+    #     # Add to buffer for smoothing
+    #     self.tilt_pitch_buffer.append(tilt_pitch)
+    #     smoothed_pitch = sum(self.tilt_pitch_buffer) / len(self.tilt_pitch_buffer)
         
-        # Map from -90 to 90 degrees to 0.0 to 1.0
-        expression_value = (smoothed_pitch + 90) / 180.0
-        expression_value = max(0.0, min(1.0, expression_value))
+    #     # Map from -90 to 90 degrees to 0.0 to 1.0
+    #     expression_value = (smoothed_pitch + 90) / 180.0
+    #     expression_value = max(0.0, min(1.0, expression_value))
         
-        self.client.send_message('/synth/expression', expression_value)
+    #     self.client.send_message('/synth/expression', expression_value)
     
     def send_volume(self, value):
         """
@@ -96,13 +98,11 @@ class OSCManager:
             value: float 0.0-1.0 representing volume
         """
         value = max(0.0, min(1.0, value))
-        
-        # Only send if significantly different from last value (hysteresis)
-        if self.last_volume is None or abs(value - self.last_volume) > 0.1:
+        if self.last_volume is None or abs(value - self.last_volume) >= 0.01:
             self.client.send_message('/synth/volume', value)
             self.last_volume = value
     
-    def send_all(self, pitch, mode, tilt_roll, tilt_pitch, volume):
+    def send_all(self, pitch, mode, tilt_roll, volume):
         """
         Convenience method to send all parameters at once.
         
@@ -113,10 +113,14 @@ class OSCManager:
             tilt_pitch: float in degrees (-90 to 90)
             volume: float 0.0-1.0
         """
+        now = time.time()
+        if now - self.last_debug_print_time >= 0.25:
+            print(f"Sending OSC - Pitch: {pitch:.2f}, Mode: {mode}, Roll: {tilt_roll:.1f}°, Volume: {volume:.2f}")
+            self.last_debug_print_time = now
         self.send_pitch(pitch)
         self.send_mode(mode)
         self.send_vibrato(tilt_roll)
-        self.send_expression(tilt_pitch)
+        # self.send_expression(tilt_pitch)
         self.send_volume(volume)
     
     def send_panic(self):
