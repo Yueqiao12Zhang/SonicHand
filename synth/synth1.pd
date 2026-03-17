@@ -88,6 +88,7 @@
 #X obj 1037 234 * 50;
 #X obj 970 144 * 5;
 #X obj 970 172 sig~;
+#X text 1459 526 TODO: Add complex synth;
 #X connect 0 0 1 0;
 #X connect 1 0 2 0;
 #X connect 2 0 3 0;

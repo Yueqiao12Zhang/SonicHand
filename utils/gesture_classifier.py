@@ -9,7 +9,8 @@ class GestureClassifier:
     
     def __init__(self):
         """Initialize gesture thresholds."""
-        self.extended_threshold = 0.05  # PIP to tip distance threshold
+        self.extended_threshold = 0.01  # Base threshold in normalized image coords
+        self.roll_relaxed_threshold_deg = 35  # Relax rules when hand is strongly rolled
     
     def distance(self, p1, p2):
         """Calculate Euclidean distance between two points."""
@@ -17,27 +18,74 @@ class GestureClassifier:
     
     def is_finger_extended(self, landmarks, tip_idx, pip_idx):
         """
-        Check if finger is extended by comparing tip position with PIP (vertical).
-        For regular fingers (index, middle, ring, pinky).
+        Tilt-aware finger extension check for index/middle/ring/pinky.
+        Uses wrist-relative radial growth + palm-axis projection so detection works
+        even when the hand is rotated (roll).
         """
+        wrist = landmarks[0]
+        middle_mcp = landmarks[9]
         tip = landmarks[tip_idx]
         pip = landmarks[pip_idx]
-        # Finger is extended if tip is significantly above PIP (y-coordinate is smaller)
-        return (pip.y - tip.y) > self.extended_threshold
+
+        # Adaptive threshold based on hand size in frame
+        hand_size = self.distance(wrist, middle_mcp)
+        min_extension = max(self.extended_threshold * 0.6, hand_size * 0.12)
+
+        # 1) Radial test: tip should be farther from wrist than PIP
+        radial_gain = self.distance(wrist, tip) - self.distance(wrist, pip)
+        radial_extended = radial_gain > min_extension
+
+        # 2) Axis test: tip should advance in the palm-forward direction
+        axis_x = middle_mcp.x - wrist.x
+        axis_y = middle_mcp.y - wrist.y
+        axis_norm = math.sqrt(axis_x * axis_x + axis_y * axis_y) + 1e-9
+        axis_x /= axis_norm
+        axis_y /= axis_norm
+
+        tip_vec_x = tip.x - pip.x
+        tip_vec_y = tip.y - pip.y
+        axis_progress = tip_vec_x * axis_x + tip_vec_y * axis_y
+        axis_extended = axis_progress > (min_extension * 0.45)
+
+        return radial_extended and axis_extended
     
     def is_thumb_extended(self, landmarks):
         """
-        Check if thumb is extended horizontally.
-        Thumb extends from ~0.5 (MCP) to 4 (tip)
-        Extended if tip.x is significantly different from MCP
+        Tilt-aware thumb extension check.
+        Avoids hard-coding a left/right x-direction rule.
         """
+        metrics = self.get_thumb_extension_metrics(landmarks)
+        return (
+            metrics["segment_growth"] > metrics["min_extension"]
+            and metrics["radial_gain"] > metrics["radial_threshold"]
+        )
+
+    def get_thumb_extension_metrics(self, landmarks):
+        """
+        Compute thumb extension metrics for debugging/visualization.
+
+        Returns: dict with segment_growth, radial_gain, min_extension, radial_threshold
+        """
+        wrist = landmarks[0]
         thumb_mcp = landmarks[2]
+        thumb_ip = landmarks[3]
         thumb_tip = landmarks[4]
-        # Thumb is extended if tip is far from MCP horizontally
-        horizontal_dist = thumb_tip.x - thumb_mcp.x
-        vertical_dist = thumb_tip.y - thumb_mcp.y
-        # Extended if horizontal distance > vertical (sideways extension)
-        return horizontal_dist < 0 and vertical_dist < self.extended_threshold  # Right hand, thumb extends left
+
+        hand_size = self.distance(wrist, landmarks[9])
+        min_extension = max(self.extended_threshold, hand_size * 0.13)
+
+        # Thumb is extended if MCP->tip is noticeably longer than MCP->IP
+        segment_growth = self.distance(thumb_mcp, thumb_tip) - self.distance(thumb_mcp, thumb_ip)
+
+        # And tip is farther from wrist than IP (helps reject folded-thumb fist)
+        radial_gain = self.distance(wrist, thumb_tip) - self.distance(wrist, thumb_ip)
+
+        return {
+            "segment_growth": segment_growth,
+            "radial_gain": radial_gain,
+            "min_extension": min_extension,
+            "radial_threshold": min_extension * 0.3,
+        }
     
     def classify_posture(self, landmarks):
         """
@@ -52,6 +100,10 @@ class GestureClassifier:
         
         Returns: int (0-5)
         """
+        # Tilt-aware adaptation: when roll is high, a finger can look partially folded in 2D.
+        roll_abs = abs(self.get_tilt_roll(landmarks))
+        open_hand_min_fingers = 2 if roll_abs >= self.roll_relaxed_threshold_deg else 3
+
         # Check each finger
         thumb_extended = self.is_thumb_extended(landmarks)
         index_extended = self.is_finger_extended(landmarks, 8, 6)
@@ -64,8 +116,8 @@ class GestureClassifier:
         extended_count = sum(fingers_extended)
         
         # Classification logic
-        if extended_count >= 3:
-            # Open hand (at least 3 fingers extended)
+        if extended_count >= open_hand_min_fingers:
+            # Open hand (tilt-aware threshold)
             return 0
         
         elif extended_count == 0 and not thumb_extended:
@@ -94,21 +146,20 @@ class GestureClassifier:
     def get_tilt_roll(self, landmarks):
         """
         Calculate hand tilt (roll) - side-to-side rotation.
-        Uses the vector from wrist (0) to middle finger tip (12).
+        Uses the vector from wrist (0) to middle finger MCP (9),
+        which is more stable across different finger poses.
         
         Returns: roll_angle in degrees (-90 to 90, 0 = vertical, positive = tilted right)
         """
         wrist = landmarks[0]
-        middle_tip = landmarks[12]
+        middle_mcp = landmarks[9]
         
         # Calculate vector
-        dx = middle_tip.x - wrist.x
-        dy = middle_tip.y - wrist.y
+        dx = middle_mcp.x - wrist.x
+        dy = middle_mcp.y - wrist.y
         
-        # Calculate angle in radians then convert to degrees
-        angle_rad = math.atan2(dy, dx)
-        angle_deg = math.degrees(angle_rad)
-        angle_deg -= 90  # Adjust so 0 is vertical, positive is tilted right
+        # 0 deg when pointing up (negative y), positive when tilted right
+        angle_deg = math.degrees(math.atan2(dx, -dy))
         
         # Convert to -90 to 90 range
         if angle_deg > 90:
@@ -128,10 +179,6 @@ class GestureClassifier:
         """
         wrist = landmarks[0]
         middle_mcp = landmarks[9]
-        middle_tip = landmarks[12]
-        
-        # Calculate hand size (distance from wrist to middle tip)
-        hand_size = math.sqrt((middle_tip.x - wrist.x)**2 + (middle_tip.y - wrist.y)**2)
         
         # Calculate MCP depth ratio (proxy for pitch)
         # If fingers are more extended below wrist, hand is tilted forward

@@ -106,6 +106,7 @@ try:
                 # Get tilt angles
                 tilt_roll = gesture_classifier.get_tilt_roll(hand_landmarks)
                 # tilt_pitch = gesture_classifier.get_tilt_pitch(hand_landmarks)
+                thumb_metrics = gesture_classifier.get_thumb_extension_metrics(hand_landmarks)
                 
                 # Get hand position for visualization
                 hand_center_x = int(hand_landmarks[9].x * w)
@@ -138,6 +139,14 @@ try:
                 cv2.putText(frame, f"Roll: {tilt_roll:.1f}°", 
                            (hand_center_x - 100, hand_center_y - 10),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 100, 0), 2)
+
+                cv2.putText(frame, f"SegGrowth: {thumb_metrics['segment_growth']:.3f}",
+                           (hand_center_x - 100, hand_center_y + 15),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 255, 150), 2)
+
+                cv2.putText(frame, f"RadGain: {thumb_metrics['radial_gain']:.3f}",
+                           (hand_center_x - 100, hand_center_y + 38),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 255, 150), 2)
         
         # --- SAFETY: If no hand detected, send volume 0 ---
         if not hand_detected:
