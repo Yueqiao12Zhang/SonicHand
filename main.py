@@ -21,7 +21,7 @@ hand_landmarker = vision.HandLandmarker.create_from_options(options)
 gesture_classifier = GestureClassifier()
 
 # --- INITIALIZE ARDUINO HANDLER ---
-arduino = ArduinoHandler(port='/dev/cu.usbserial-1130', smooth_window=5)
+arduino = ArduinoHandler(port='/dev/cu.usbserial-1110', smooth_window=5)
 arduino.connect()
 
 # --- INITIALIZE OSC MANAGER ---
@@ -29,12 +29,11 @@ osc = OSCManager(ip='127.0.0.1', port=9999, tilt_smooth_window=5)
 
 # --- GESTURE MODE DESCRIPTIONS ---
 GESTURE_MODES = {
-    0: "Open Hand (Complex modulation)",
-    1: "Closed Fist (Basic sine/square)",
-    2: "Fist + Thumb (Sub-octave)",
-    3: "Fist + Index (Fifth/Overtones)",
-    4: "Fist + Thumb + Index (Both colors)",
-    5: "Peace Sign (Reverb/Delay)"
+    0: "Open Hand (Chord)",
+    1: "Closed Fist (Off)",
+    2: "Fist + Thumb (Bass)",
+    3: "Fist + Index (Saw Pad)",
+    4: "Fist + Thumb + Index (Arpeggio)",
 }
 
 # --- HELPER FUNCTION: Draw hand landmarks ---

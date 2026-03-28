@@ -58,6 +58,7 @@ class GestureClassifier:
         return (
             metrics["segment_growth"] > metrics["min_extension"]
             and metrics["radial_gain"] > metrics["radial_threshold"]
+            and metrics["thumb_orientation"] < 0
         )
 
     def get_thumb_extension_metrics(self, landmarks):
@@ -85,6 +86,7 @@ class GestureClassifier:
             "radial_gain": radial_gain,
             "min_extension": min_extension,
             "radial_threshold": min_extension * 0.3,
+            "thumb_orientation": thumb_tip.x - thumb_ip.x  # Positive if thumb points right, negative if left
         }
     
     def classify_posture(self, landmarks):
@@ -100,9 +102,9 @@ class GestureClassifier:
         
         Returns: int (0-5)
         """
-        # Tilt-aware adaptation: when roll is high, a finger can look partially folded in 2D.
+        # Tilt-aware adaptation: when roll is high, one non-thumb finger may look folded in 2D.
+        # Keep open-hand strict enough to avoid classifying generic 3-finger poses as open hand.
         roll_abs = abs(self.get_tilt_roll(landmarks))
-        open_hand_min_fingers = 2 if roll_abs >= self.roll_relaxed_threshold_deg else 3
 
         # Check each finger
         thumb_extended = self.is_thumb_extended(landmarks)
@@ -116,8 +118,21 @@ class GestureClassifier:
         extended_count = sum(fingers_extended)
         
         # Classification logic
-        if extended_count >= open_hand_min_fingers:
-            # Open hand (tilt-aware threshold)
+        # Open hand requires either:
+        # - all 4 non-thumb fingers extended, or
+        # - high roll + 3 non-thumb fingers + thumb extended
+        # This prevents 3-finger gestures (thumb folded) from being misclassified as open hand.
+        is_open_hand = (
+            extended_count >= 4
+            or (
+                roll_abs >= self.roll_relaxed_threshold_deg
+                and extended_count == 3
+                and thumb_extended
+            )
+        )
+
+        if is_open_hand:
+            # Open hand (tilt-aware)
             return 0
         
         elif extended_count == 0 and not thumb_extended:
@@ -128,17 +143,12 @@ class GestureClassifier:
             # Fist + Thumb out
             return 2
         
-        elif extended_count == 1 and index_extended and not thumb_extended:
-            # Fist + Index out (but not thumb)
-            return 3
-        
         elif extended_count == 1 and index_extended and thumb_extended:
             # Fist + Thumb + Index out
-            return 4
+            return 3
         
-        elif index_extended and middle_extended and extended_count == 2 and not thumb_extended:
-            # Peace sign (Index & Middle, no thumb)
-            return 5
+        elif extended_count == 2 and index_extended and thumb_extended and middle_extended:
+            return 4
         
         # Default to closed fist if ambiguous
         return 1

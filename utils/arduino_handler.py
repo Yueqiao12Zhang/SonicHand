@@ -5,6 +5,7 @@ Reads distance values and applies smoothing filters.
 import serial
 import time
 from collections import deque
+import math
 
 class ArduinoHandler:
     """Manages serial communication with Arduino and distance sensor data."""
@@ -74,7 +75,7 @@ class ArduinoHandler:
                     except ValueError:
                         continue
 
-                    if 5 <= distance_cm <= 100:
+                    if math.isfinite(distance_cm) and 5 <= distance_cm <= 100:
                         latest_distance = distance_cm
 
             if latest_distance is not None:
@@ -85,8 +86,15 @@ class ArduinoHandler:
                 smoothed_distance = sum(self.distance_buffer) / len(self.distance_buffer)
 
                 # Normalize to 0.0-1.0 based on 5-50cm range
-                normalized = (smoothed_distance - self.min_distance) / (self.max_distance - self.min_distance)
+                distance_span = self.max_distance - self.min_distance
+                if distance_span <= 0:
+                    return latest_distance, smoothed_distance, None
+
+                normalized = (smoothed_distance - self.min_distance) / distance_span
                 normalized = max(0.0, min(1.0, normalized))  # Clamp to [0, 1]
+
+                if not math.isfinite(normalized):
+                    return latest_distance, smoothed_distance, None
 
                 return latest_distance, smoothed_distance, normalized
         except (ValueError, UnicodeDecodeError):

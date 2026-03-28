@@ -4,6 +4,7 @@ Handles UDP OSC messages to a local or remote server.
 """
 from pythonosc import udp_client
 from collections import deque
+import math
 import time
 
 class OSCManager:
@@ -36,6 +37,8 @@ class OSCManager:
         Args:
             value: float 0.0-1.0 representing pitch
         """
+        if value is None or not math.isfinite(value):
+            return
         value = max(0.0, min(1.0, value))
         self.client.send_message('/synth/pitch', value)
     
@@ -61,9 +64,15 @@ class OSCManager:
         Args:
             tilt_roll: float in degrees (-90 to 90)
         """
+        if tilt_roll is None or not math.isfinite(tilt_roll):
+            return
+
         # Add to buffer for smoothing
         self.tilt_roll_buffer.append(tilt_roll)
         smoothed_roll = sum(self.tilt_roll_buffer) / len(self.tilt_roll_buffer)
+
+        if not math.isfinite(smoothed_roll):
+            return
         
         # Map from -90 to 90 degrees to 0.0 to 1.0
         vibrato_value = abs(smoothed_roll) / 60
@@ -97,6 +106,8 @@ class OSCManager:
         Args:
             value: float 0.0-1.0 representing volume
         """
+        if value is None or not math.isfinite(value):
+            return
         value = max(0.0, min(1.0, value))
         if self.last_volume is None or abs(value - self.last_volume) >= 0.01:
             self.client.send_message('/synth/volume', value)
@@ -114,14 +125,25 @@ class OSCManager:
             volume: float 0.0-1.0
         """
         now = time.time()
+        safe_pitch = None if pitch is None or not math.isfinite(pitch) else max(0.0, min(1.0, pitch))
+        safe_roll = None if tilt_roll is None or not math.isfinite(tilt_roll) else tilt_roll
+        safe_volume = None if volume is None or not math.isfinite(volume) else max(0.0, min(1.0, volume))
+
         if now - self.last_debug_print_time >= 0.25:
-            print(f"Sending OSC - Pitch: {pitch:.2f}, Mode: {mode}, Roll: {tilt_roll:.1f}°, Volume: {volume:.2f}")
+            pitch_text = f"{safe_pitch:.2f}" if safe_pitch is not None else "invalid"
+            roll_text = f"{safe_roll:.1f}" if safe_roll is not None else "invalid"
+            volume_text = f"{safe_volume:.2f}" if safe_volume is not None else "invalid"
+            print(f"Sending OSC - Pitch: {pitch_text}, Mode: {mode}, Roll: {roll_text}°, Volume: {volume_text}")
             self.last_debug_print_time = now
-        self.send_pitch(pitch)
+
+        if safe_pitch is None or safe_roll is None or safe_volume is None:
+            return
+
+        self.send_pitch(safe_pitch)
         self.send_mode(mode)
-        self.send_vibrato(tilt_roll)
+        self.send_vibrato(safe_roll)
         # self.send_expression(tilt_pitch)
-        self.send_volume(volume)
+        self.send_volume(safe_volume)
     
     def send_panic(self):
         """Send emergency stop message to PlugData (volume 0)."""
