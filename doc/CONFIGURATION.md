@@ -122,12 +122,11 @@ osc = OSCManager(
     |
 [oscparse]
     |
-[route /synth/pitch /synth/mode /synth/vibrato /synth/expression /synth/volume /synth/panic]
+[route /synth/pitch /synth/mode /synth/vibrato /synth/volume /synth/panic]
     |
     +--→ [print pitch]
     +--→ [print mode]
     +--→ [print vibrato]
-    +--→ [print expression]
     +--→ [print volume]
     +--→ [print panic]
 ```
@@ -322,7 +321,7 @@ c.send_message('/synth/pitch', 0.5)
 
 ### Integration Test
 - [ ] Move hand closer → pitch increases
-- [ ] Change to peace sign → mode 5 detected
+- [ ] Change hand posture (thumb/index variations) → mode 0-4 switches correctly
 - [ ] Tilt hand left/right → vibrato changes
 - [ ] Remove hand → volume goes to 0 (safety)
 - [ ] Press 'q' → graceful shutdown, panic sent

@@ -100,7 +100,7 @@ Project Root
 │   ├── requirements.txt           ← Python dependencies
 │   │
 │   ├── utils/ (Modules)
-│   │   ├── gesture_classifier.py  ← 6-mode classification
+│   │   ├── gesture_classifier.py  ← 5-mode classification
 │   │   ├── arduino_handler.py     ← Serial I/O
 │   │   ├── osc_manager.py         ← OSC sending
 │   │   └── webcam_capture.py      ← Legacy (optional)
@@ -225,7 +225,7 @@ python -c "from pythonosc import udp_client"  # Test OSC
 
 ### OSC_PROTOCOL.md
 - OSC message format
-- 6 parameter specification
+- 5 active-parameter specification (+ 1 disabled legacy channel)
 - Type & range for each message
 - Example PlugData code
 - Testing procedures
@@ -293,19 +293,17 @@ Converts hand gestures + distance sensor → OSC messages for synthesizer
 - Python logic: Gesture classification
 - OSC: Network control protocol
 
-### Six Gesture Modes
+### Five Gesture Modes
 ```
 0: Open Hand        → Full harmonics
 1: Closed Fist      → Basic sine/square
 2: Fist + Thumb    → Sub-octave
-3: Fist + Index    → Overtones
-4: Both pointing    → Combined effects
-5: Peace Sign      → Reverb/Delay
+3: Thumb + Index    → Harmonic layer
+4: Thumb+Index+Middle → Arpeggio/combined texture
 ```
 
 ### Continuous Controls
 - Roll (side-to-side) → Vibrato
-- Pitch (forward/back) → Expression
 - Distance (close/far) → Frequency
 
 ### Performance
@@ -358,7 +356,7 @@ For help:
 - **Documentation:** 3000+ lines across 8 files
 - **Production Code:** 1500+ lines across 5 Python files
 - **Arduino Firmware:** 100 lines with detailed comments
-- **PlugData Patch:** Updated with 6 OSC parameters
+- **PlugData Patch:** Updated with active OSC routing (pitch/mode/vibrato/volume/panic)
 - **Total Effort:** 3500+ lines of well-documented code
 
 ---

@@ -60,7 +60,7 @@ python main.py
 ### Control the Synth
 - **Move hand closer/farther** → Pitch changes
 - **Change finger pose** → Mode changes
-- **Tilt hand** → Vibrato & Expression change
+- **Tilt hand** → Vibrato changes
 - **Leave frame** → Auto mutes (safety)
 
 ---

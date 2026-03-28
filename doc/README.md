@@ -47,19 +47,18 @@ A real-time gesture recognition and distance sensing system that maps hand postu
 ### 1. **Gesture Classifier** (`utils/gesture_classifier.py`)
 Analyzes MediaPipe hand landmarks to determine:
 
-#### Gesture Modes (0-5):
+#### Gesture Modes (0-4):
 | Mode | Posture | OSC Mapping | Audio Effect |
 |------|---------|-------------|--------------|
 | **0** | Open Hand (all fingers extended) | `/synth/mode 0` | Complex modulation / Full harmonics |
 | **1** | Closed Fist (no fingers extended) | `/synth/mode 1` | Basic sine/square wave |
 | **2** | Fist + Thumb Out | `/synth/mode 2` | Basic + Sub-octave color |
-| **3** | Fist + Index Out | `/synth/mode 3` | Basic + Fifth/Overtones |
-| **4** | Fist + Thumb + Index Out | `/synth/mode 4` | Basic + Both colors |
-| **5** | Peace Sign (Index & Middle) | `/synth/mode 5` | Special FX (Reverb/Delay) |
+| **3** | Thumb + Index Extended | `/synth/mode 3` | Bright harmonic layer |
+| **4** | Thumb + Index + Middle Extended | `/synth/mode 4` | Arpeggiated/combined texture |
 
 #### Continuous Parameters:
 - **Roll (Side-to-side)**: Maps to `/synth/vibrato` (0.0-1.0)
-- **Pitch (Forward/backward)**: Maps to `/synth/expression` (0.0-1.0)
+- **Distance (Near/far)**: Maps to `/synth/pitch` (0.0-1.0)
 
 ### 2. **Arduino Handler** (`utils/arduino_handler.py`)
 Manages serial communication with ultrasonic distance sensor:
@@ -76,9 +75,8 @@ Handles UDP OSC message transmission to PlugData:
 | Address | Type | Range | Function |
 |---------|------|-------|----------|
 | `/synth/pitch` | float | 0.0–1.0 | Distance-based pitch control |
-| `/synth/mode` | int | 0–5 | Gesture mode (discrete state) |
+| `/synth/mode` | int | 0–4 | Gesture mode (discrete state) |
 | `/synth/vibrato` | float | 0.0–1.0 | Hand roll (side-to-side tilt) |
-| `/synth/expression` | float | 0.0–1.0 | Hand pitch (forward/backward tilt) |
 | `/synth/volume` | float | 0.0–1.0 | Safety volume control (0 = mute) |
 | `/synth/panic` | int | 0 or 1 | Emergency stop (1 = stop) |
 
@@ -157,13 +155,12 @@ Handles UDP OSC message transmission to PlugData:
    - ✓/✗ Arduino connection status
    - Current gesture mode and name
    - Distance reading (cm and normalized 0.0-1.0)
-   - Hand roll and pitch angles (degrees)
+   - Hand roll angle (degrees)
 
 4. **Control synthesis:**
    - **Move hand closer/farther** → Control pitch
    - **Change finger configuration** → Switch synthesis mode
    - **Tilt hand side-to-side** → Modulate vibrato
-   - **Tilt hand forward/backward** → Modulate expression
    - **Remove hand from view** → Automatic volume mute (safety)
 
 5. **Exit:**
@@ -185,16 +182,15 @@ Normalized: (distance - 5) / (50 - 5) → 0.0–1.0
 /synth/pitch ← UDP OSC
 ```
 
-### Hand Tilt Angles → Vibrato/Expression
+### Hand Tilt Angles → Vibrato
 ```
 Raw Tilt (degrees)
     ↓
 [Moving Average Filter: 5-sample window]
     ↓
 Roll: (-90 to 90°) → (0.0 to 1.0)
-Pitch: (-90 to 90°) → (0.0 to 1.0)
     ↓
-/synth/vibrato, /synth/expression ← UDP OSC
+/synth/vibrato ← UDP OSC
 ```
 
 ### Gesture Mode (Discrete)
@@ -203,7 +199,7 @@ Hand Landmarks
     ↓
 Classify Posture (finger detection)
     ↓
-Gesture State: 0–5 (discrete)
+Gesture State: 0–4 (discrete)
     ↓
 /synth/mode ← UDP OSC (only on change)
 ```
@@ -296,17 +292,16 @@ osc = OSCManager(ip='127.0.0.1', port=9999)
 The included `synth/synth1.pd` patch expects:
 - **OSC Input:** UDP netreceive on port 9999
 - **Messages:**
-  - `/pitch` → osc~ frequency
-  - `/mode` → route/select synthesis mode
-  - `/vibrato` → modulation depth
-  - `/expression` → amplitude envelope
-  - `/volume` → master volume multiplier
-  - `/panic` → stop all notes
+   - `/synth/pitch` → osc~ frequency
+   - `/synth/mode` → route/select synthesis mode
+   - `/synth/vibrato` → modulation depth
+   - `/synth/volume` → master volume multiplier
+   - `/synth/panic` → stop all notes
 
 Extend the patch to:
 1. Add mode-specific synthesis chains (sine, square, suboctave, overtones)
-2. Implement reverb/delay effect for mode 5
-3. Map vibrato/expression to appropriate parameters
+2. Add extra timbre logic for mode 4
+3. Map vibrato to appropriate modulation parameters
 4. Add safety cutoff for `/panic` messages
 
 ---
@@ -366,5 +361,5 @@ Extend the patch to:
 
 For issues or improvements, refer to the inline code comments or create an issue.
 
-**Version:** 1.0  
-**Last Updated:** 2026-03-15
+**Version:** 1.1  
+**Last Updated:** 2026-03-27

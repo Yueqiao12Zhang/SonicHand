@@ -30,18 +30,18 @@
     │ Input: Hand landmarks   │
     │ • Finger extension check│
     │ • Thumb detection       │
-    │ • Peace sign detection  │
+    │ • Thumb/index state map │
     │                         │
     │ Output: Gesture State   │
-    │ • Mode: 0-5 (discrete)  │
+    │ • Mode: 0-4 (discrete)  │
     │ • Roll angle (degrees)  │
-    │ • Pitch angle (degrees) │
+    │ • Thumb debug metrics   │
     └────────────┬────────────┘
                  │
       ┌──────────┴──────────┐
       │                     │
       v                     v
-   MODE (0-5)        TILT ANGLES
+     MODE (0-4)        TILT ROLL
    DISCRETE          Continuous
      STATE           (° degrees)
 
@@ -68,24 +68,24 @@
 │                          CONVERSION & SMOOTHING                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-    MODE 0-5                    TILT ROLL              TILT PITCH
-    (unchanged)                 (angle → 0-1)         (angle → 0-1)
-        │                            │                     │
-        │                    ┌───────┴────────┐            │
+    MODE 0-4                    TILT ROLL
+    (unchanged)                 (angle → 0-1)
+        │                            │
+        │                    ┌───────┴────────┐
         │                    │                │            │
         │                  [+90]°  [-90]°    │            │
         │                    │                │            │
-        │                    v                v            v
-        │                  ÷180              ÷180
-        │                    │                │
-        │    Moving Average Filter           │
-        │    (5 samples)                      │
-        │                    │                │
         │                    v                v
-        │              0.0-1.0            0.0-1.0
-        │                    │                │
-        │              VIBRATO          EXPRESSION
-        │              CONTROL          CONTROL
+        │                  ÷180
+        │                    │
+        │    Moving Average Filter
+        │    (5 samples)
+        │                    │
+        │                    v
+        │                 0.0-1.0
+        │                    │
+        │                 VIBRATO
+        │                 CONTROL
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                        OSC MESSAGE TRANSMISSION LAYER                        │
@@ -95,11 +95,10 @@
     │   OSC MANAGER            │
     │   (osc_manager.py)       │
     ├──────────────────────────┤
-    │ Input: All 5 parameters  │
+    │ Input: Active parameters │
     │ • Pitch (float)          │
     │ • Mode (int)             │
     │ • Vibrato (float)        │
-    │ • Expression (float)     │
     │ • Volume (float)         │
     │                          │
     │ Protocol: OSC 1.0        │
@@ -113,14 +112,14 @@
     v                               v             v            v          v
 
 /synth/pitch               /synth/mode          /synth/vibrato
-{0.0-1.0}                 {0-5}               {0.0-1.0}
+{0.0-1.0}                 {0-4}               {0.0-1.0}
 Every frame               On change           Every frame
 
-    + 
+    +
 
-/synth/expression        /synth/volume
-{0.0-1.0}               {0.0-1.0}
-Every frame             On change + safety
+/synth/volume            /synth/panic
+{0.0-1.0}               {0 or 1}
+On change + safety      On shutdown / safety
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          NETWORK & UDP TRANSPORT                             │
@@ -147,24 +146,22 @@ Every frame             On change + safety
             │
     [oscparse]
             │
-    [route /synth/pitch /synth/mode /synth/vibrato /synth/expression /synth/volume]
+    [route /synth/pitch /synth/mode /synth/vibrato /synth/volume /synth/panic]
             │
             ├──────────────┬────────────┬────────────┬────────────┬──────────┐
             │              │            │            │            │          │
             v              v            v            v            v          v
-        [*220]        [sel 0 1 2]  [*8Hz]      [*envelope]   [*~volume]  [print]
-        [osc~]        ...mode...  [osc~LFO] [line~ADSR]    [dac~]
+        [*220]        [sel 0 1 2 3 4] [*8Hz]   [*~volume]   [panic]     [print]
+        [osc~]        ...mode...       [osc~LFO] [dac~]      [mute]
                                   [pitch+]   [filter]       Audio Out
         Carrier
         Oscillator
             │
             └────────────────────┬────────────────────────────┐
                                  │                            │
-                            [*~EXPRESSION]               [*~VIBRATO]
-                                 │                            │
-                                 └────────────┬───────────────┘
-                                              │
-                                              v
+                                        [*~VIBRATO]
+                                            │
+                                            v
                                         [*~volume]
                                               │
                                               v
@@ -212,7 +209,7 @@ Python reads from buffer
 
 ### 2. Gesture Classification (5-10ms)
 
-**Classify Posture (0-5)**
+**Classify Posture (0-4)**
 ```
 For each finger: check if extended
     ↓
@@ -222,7 +219,7 @@ Detect thumb orientation
     ↓
 Apply classification rules
     ↓
-Return discrete mode 0-5
+Return discrete mode 0-4
 ```
 
 **Calculate Roll Angle**
@@ -239,14 +236,7 @@ Normalize to -90° to +90°
 Return degrees
 ```
 
-**Calculate Pitch Angle**
-```
-Y-distance: wrist (0) → middle MCP (9)
-    ↓
-Map forward/backward to -90° to +90°
-    ↓
-Return degrees
-```
+Pitch-angle extraction is present in utility code but currently not part of the active OSC control path.
 
 ### 3. Smoothing & Normalization (3-5ms)
 
@@ -282,10 +272,10 @@ Clamp: max(0.0, min(1.0, result))
 ```
 Prepare OSC packet:
     /synth/pitch {float 0.0-1.0}
-    /synth/mode {int 0-5}
+    /synth/mode {int 0-4}
     /synth/vibrato {float 0.0-1.0}
-    /synth/expression {float 0.0-1.0}
     /synth/volume {float 0.0-1.0}
+    /synth/panic {int 0|1}
     
 Encode as OSC binary format
 Send via UDP to 127.0.0.1:9999
@@ -309,7 +299,6 @@ Each stream goes to corresponding control
 Pitch input → [osc~] frequency
 Mode input → signal chain selector
 Vibrato → LFO generator
-Expression → ADSR envelope
 Volume → output multiplier
     ↓
 Output audio to [dac~]
@@ -364,15 +353,13 @@ gesture_mode: int
   0: Open Hand
   1: Closed Fist
   2: Fist + Thumb
-  3: Fist + Index
-  4: Fist + Thumb + Index
-  5: Peace Sign
+    3: Thumb + Index
+    4: Thumb + Index + Middle
 ```
 
 ### Angles
 ```
 Roll (X-axis rotation):  -90° to +90° (left to right)
-Pitch (Y-axis rotation): -90° to +90° (back to forward)
 
 After normalization: 0.0 to 1.0 (linear mapping)
 ```
@@ -380,9 +367,8 @@ After normalization: 0.0 to 1.0 (linear mapping)
 ### OSC Arguments
 ```
 /synth/pitch           f      float  [0.0, 1.0]
-/synth/mode            i      int    [0, 5]
+/synth/mode            i      int    [0, 4]
 /synth/vibrato         f      float  [0.0, 1.0]
-/synth/expression      f      float  [0.0, 1.0]
 /synth/volume          f      float  [0.0, 1.0]
 /synth/panic           i      int    [0, 1]
 ```
