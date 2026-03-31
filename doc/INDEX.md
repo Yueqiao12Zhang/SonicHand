@@ -33,42 +33,6 @@
 
 ---
 
-## 🎯 Use Cases & Guides
-
-### "I want to run this right now!"
-1. Read: [QUICKSTART.md](QUICKSTART.md)
-2. Run: `python test_system.py`
-3. Run: `python main.py`
-
-### "I need to configure the system"
-1. Read: [QUICKSTART.md](QUICKSTART.md) (setup)
-2. Read: [CONFIGURATION.md](CONFIGURATION.md) (tuning)
-3. Edit: `main.py` with your settings
-
-### "I'm having issues"
-1. Run: `python test_system.py` → See which component fails
-2. Read: [CONFIGURATION.md](CONFIGURATION.md) → Find your issue
-3. Check: Code comments in relevant module
-
-### "I want to understand how it works"
-1. Read: [README.md](README.md)
-2. Read: [ARCHITECTURE.md](ARCHITECTURE.md)
-3. Read: [OSC_PROTOCOL.md](OSC_PROTOCOL.md)
-4. Study: [main.py](main.py) code & comments
-
-### "I need to integrate with PlugData"
-1. Read: [OSC_PROTOCOL.md](OSC_PROTOCOL.md)
-2. Review: [synth/synth1.pd](synth/synth1.pd)
-3. Reference: [ARCHITECTURE.md](ARCHITECTURE.md) → Latency section
-
-### "I want to extend or modify the system"
-1. Read: [ARCHITECTURE.md](ARCHITECTURE.md) → Data flow
-2. Study: [utils/](utils/) module files
-3. Review: Code comments
-4. Check: [REQUIREMENTS_FULFILLMENT.md](REQUIREMENTS_FULFILLMENT.md)
-
----
-
 ## 🔧 Executable Files
 
 ### Main Application
@@ -95,8 +59,6 @@ python test_system.py
 Project Root
 ├── Code (Production)
 │   ├── main.py                    ← RUN THIS
-│   ├── test_system.py             ← RUN THIS (diagnostics)
-│   ├── download_model.py          ← RUN THIS (setup)
 │   ├── requirements.txt           ← Python dependencies
 │   │
 │   ├── utils/ (Modules)
@@ -115,7 +77,6 @@ Project Root
     ├── README.md                  ← START HERE
     ├── QUICKSTART.md              ← 5-minute setup
     ├── CONFIGURATION.md           ← Advanced tuning
-    ├── ARCHITECTURE.md            ← Data flow & latency
     ├── OSC_PROTOCOL.md            ← OSC specification
     ├── COMPLETION_SUMMARY.md      ← Project summary
     ├── REQUIREMENTS_FULFILLMENT.md← Checklist
@@ -252,36 +213,6 @@ python -c "from pythonosc import udp_client"  # Test OSC
 
 ---
 
-## 🎓 Learning Paths
-
-### Path 1: "Just Make It Work" (15 minutes)
-1. Read: QUICKSTART.md
-2. Update: main.py line 25 with your Arduino port
-3. Run: `python main.py`
-
-### Path 2: "Understand It" (1 hour)
-1. Read: README.md (20 min)
-2. Read: ARCHITECTURE.md (20 min)
-3. Review: main.py code (10 min)
-4. Run: `python main.py`
-
-### Path 3: "Master It" (2 hours)
-1. Read: README.md (20 min)
-2. Read: ARCHITECTURE.md (20 min)
-3. Read: CONFIGURATION.md (20 min)
-4. Read: OSC_PROTOCOL.md (20 min)
-5. Study: All code files (30 min)
-6. Run: `python test_system.py` + `python main.py`
-
-### Path 4: "Troubleshoot It" (varies)
-1. Run: `python test_system.py`
-2. Find failing component
-3. Read: Relevant section in CONFIGURATION.md
-4. Review: Code comments
-5. Try: Suggested solutions
-
----
-
 ## 💡 Key Information at a Glance
 
 ### What It Does
@@ -333,31 +264,9 @@ Converts hand gestures + distance sensor → OSC messages for synthesizer
 
 Before using the system:
 - [ ] Read QUICKSTART.md
-- [ ] Run `python test_system.py`
-- [ ] All tests pass ✓
 - [ ] Arduino port configured
 - [ ] PlugData patch ready
 - [ ] Good lighting available
-
----
-
-## 📞 Support
-
-For help:
-1. **First:** Run `python test_system.py`
-2. **Second:** Check [CONFIGURATION.md](CONFIGURATION.md) troubleshooting section
-3. **Third:** Review inline code comments
-4. **Fourth:** Read [ARCHITECTURE.md](ARCHITECTURE.md) for system design
-
----
-
-## 📊 Project Statistics
-
-- **Documentation:** 3000+ lines across 8 files
-- **Production Code:** 1500+ lines across 5 Python files
-- **Arduino Firmware:** 100 lines with detailed comments
-- **PlugData Patch:** Updated with active OSC routing (pitch/mode/vibrato/volume/panic)
-- **Total Effort:** 3500+ lines of well-documented code
 
 ---
 

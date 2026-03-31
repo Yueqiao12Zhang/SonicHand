@@ -28,13 +28,13 @@ ECHO    →      Pin 10
 
 #### Arduino Serial Configuration
 ```cpp
-Serial.begin(9600);  // Baud rate must match main.py
+Serial.begin(115200);  // Baud rate must match main.py
 ```
 
 #### Test Arduino Output
 ```bash
 # macOS: Use screen or miniterm to verify data
-screen /dev/cu.usbserial-1130 9600
+screen /dev/cu.usbserial-1110 115200
 # You should see distance values like: 15, 16, 14, 15...
 # Press Ctrl+A then Ctrl+Q to exit
 ```
@@ -50,33 +50,18 @@ ls /dev/tty.*
 # Common patterns: /dev/cu.usbserial-1130, /dev/cu.usbserial-14140
 ```
 
-#### Linux
-```bash
-ls /dev/ttyUSB* /dev/ttyACM*
-# Common: /dev/ttyUSB0, /dev/ttyACM0
-```
-
-#### Windows
-```cmd
-wmic logicaldisk where name="COM3" list
-# Or use Device Manager → Ports (COM & LPT)
-```
-
 ---
 
 ### 3. Python Environment Configuration
 
 #### Install Requirements
 ```bash
-pip install opencv-python python-osc mediapipe pyserial numpy
-# Or use requirements.txt:
 pip install -r requirements.txt
 ```
 
 #### Download MediaPipe Model
 ```bash
-python download_model.py
-# Creates: hand_landmarker.task (~200MB)
+https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/index#models
 ```
 
 #### Verify Installation
@@ -96,7 +81,7 @@ Update these lines if using non-standard configuration:
 # Line 25: Arduino serial port
 arduino = ArduinoHandler(
     port='/dev/cu.usbserial-1130',  # ← YOUR SERIAL PORT HERE
-    baudrate=9600,                  # Must match Arduino
+    baudrate=115200,                  # Must match Arduino
     smooth_window=5                 # Smoothing filter size
 )
 
@@ -115,37 +100,6 @@ osc = OSCManager(
 #### Install PlugData
 - Download from [plugdata.org](https://plugdata.org)
 - Or use Pure Data with `netreceive`
-
-#### Create PlugData Patch (or use provided synth1.pd)
-```
-[netreceive -u -l 9999]
-    |
-[oscparse]
-    |
-[route /synth/pitch /synth/mode /synth/vibrato /synth/volume /synth/panic]
-    |
-    +--→ [print pitch]
-    +--→ [print mode]
-    +--→ [print vibrato]
-    +--→ [print volume]
-    +--→ [print panic]
-```
-
-#### Test PlugData Connectivity
-1. Start PlugData
-2. Put patch in edit mode
-3. Right-click `netreceive` → Open Inspector
-4. Verify port = 9999
-5. Check "Active" checkbox
-6. Send test message from Python:
-   ```bash
-   python -c "
-   from pythonosc import udp_client
-   client = udp_client.SimpleUDPClient('127.0.0.1', 9999)
-   client.send_message('/synth/pitch', 0.5)
-   print('Test message sent!')
-   "
-   ```
 
 ---
 
