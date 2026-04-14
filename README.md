@@ -10,14 +10,6 @@ This project converts:
 
 into real-time OSC messages for PlugData/Pure Data synthesis control.
 
-## Active Control Surface
-
-/synth/pitch      0.0 to 1.0   (distance)
-/synth/mode       0 to 4       (gesture state)
-/synth/vibrato    0.0 to 1.0   (hand roll)
-/synth/volume     0.0 and 1.0  (safety gate)
-/synth/panic      0 or 1       (shutdown/emergency)
-
 ## Gesture Modes
 
 0 = Open hand
@@ -26,28 +18,10 @@ into real-time OSC messages for PlugData/Pure Data synthesis control.
 3 = Thumb + index
 4 = Thumb + index + middle
 
-## Safety
-
-- Hand lost -> send /synth/volume 0.0
-- On exit -> send /synth/volume 0.0 and /synth/panic 1
-
-## Main Components
-
-- main.py
-- utils/gesture_classifier.py
-- utils/arduino_handler.py
-- utils/osc_manager.py
-- synth/*.pd
-- arduino_handshake/arduino_handshake.ino
-
 ## Quick Run
 
+- Download `hand_landmarker.task` from the link in `hand_landmarker_download`
+```
 pip install -r requirements.txt
-python download_model.py
 python main.py
-
-## Validation
-
-python test_system.py
-
-Expected result: components initialize and OSC stream updates live when hand/distance input changes.
+```
