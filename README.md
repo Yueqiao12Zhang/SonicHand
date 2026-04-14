@@ -1,6 +1,7 @@
-# Project Summary: Gesture-to-OSC Controller
+# SonicHand: Gesture-to-OSC Controller
 
 Updated: 2026-04-14
+- SonicHand is a final project by Yueqiao Zhang for MUMT306 in McGill University.
 
 ## What This System Does
 
