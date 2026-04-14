@@ -156,7 +156,7 @@ Handles UDP OSC message transmission to PlugData:
    - Hand roll angle (degrees)
 
 4. **Control synthesis:**
-   - **Move hand closer/farther** → Control pitch
+   - **Move closer/farther from ultrasonic sensor** → Control pitch
    - **Change finger configuration** → Switch synthesis mode
    - **Tilt hand side-to-side** → Modulate vibrato
    - **Remove hand from view** → Automatic volume mute (safety)
@@ -220,12 +220,15 @@ Gesture State: 0–4 (discrete)
 
 ---
 
-## License & Credits
+## Credits
 
-- **MediaPipe:** Google's hand tracking library
-- **python-osc:** Open Sound Control client
-- **OpenCV:** Computer vision
-- **Arduino:** Ultrasonic distance sensing
+- **[MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/guide)**: Hand gesture detection library by Google
+- **[python-osc](https://pypi.org/project/python-osc/)**: OSC protocol implementation
+- **[PySerial](https://pypi.org/project/pyserial/)**: Arduino communication
+- **[OpenCV](https://opencv.org/)**: Computer vision processing
+- Youtube tutorial for synthesizer: 
+    - https://www.youtube.com/watch?v=lx_L9dPIa78
+    - https://www.youtube.com/watch?v=hkBCYffNMX4
 
 **Version:** 1.1  
 **Last Updated:** 2026-04-14

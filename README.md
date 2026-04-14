@@ -38,4 +38,14 @@ python main.py
     - https://www.youtube.com/watch?v=hkBCYffNMX4
 - Generative AI including Github Copilot only used for code, comments, and document refining. NOT used in development.
 
+## Possible Future directions
+
+- Add machine learning model for custom gesture recognition training
+- Expand to multi-hand tracking for collaborative musical control
+- Optimize latency for real-time performance applications
+- Add calibration UI for sensor distance thresholds
+- Support multiple Arduino sensors for spatial audio control
+- Support multiple musical scales instead of the chromatic scale only for better aesthetic purposes.
+
+
 > Check `/doc` for detailed project write-up.

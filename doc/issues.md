@@ -18,6 +18,7 @@ ___
 
 # Gesture Classification
 - `utils/gesture_classifier.py`
+- Ultrasonic distance, tilt angle, hand gesture mode number, and A clear hand skeleton sketch is painted on screen for better control of the instrument and debugging.
 
 ### Finger Extension Detection Algorithm
 
