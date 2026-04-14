@@ -1,6 +1,8 @@
 This markdown documents all technical issues and resolutions implemented during project development.
 
-## Arduino Connection
+___
+
+# Arduino Connection
 - `arduino_handshake/arduino_handshake.ino`
 - `utils/arduino_handler.py`
 
@@ -12,7 +14,9 @@ This markdown documents all technical issues and resolutions implemented during 
 
 - Hardware constraints introduce consistent noise artifacts in distance sensor readings. Implementation: windowing-buffer algorithm applied to filter outliers and stabilize sensor output.
 
-## Gesture Classification
+___
+
+# Gesture Classification
 - `utils/gesture_classifier.py`
 
 ### Finger Extension Detection Algorithm
@@ -23,7 +27,9 @@ This markdown documents all technical issues and resolutions implemented during 
 
 - MediaPipe provides only positional landmarks without intrinsic orientation data. Implementation: designed robust algorithm to normalize finger extension detection relative to hand tilt angle using quaternion-based rotation matrices.
 
-## Audio Synthesis & OSC Protocol
+___
+
+# Audio Synthesis & OSC Protocol
 - `synth/*`
 
 ### Synth Mode Switching Logic
@@ -38,7 +44,9 @@ This markdown documents all technical issues and resolutions implemented during 
 
 - Panic/volume signals processed through unified volume-control algorithm, reusing mode-switching logic for consistent parameter handling.
 
-## Hardware Constraints
+___
+
+# Hardware Constraints
 
 ### Webcam Illumination
 

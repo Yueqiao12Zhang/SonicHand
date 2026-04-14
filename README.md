@@ -26,3 +26,16 @@ into real-time OSC messages for PlugData/Pure Data synthesis control.
 pip install -r requirements.txt
 python main.py
 ```
+
+## Credits
+
+- **[MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/guide)**: Hand gesture detection library by Google
+- **[python-osc](https://pypi.org/project/python-osc/)**: OSC protocol implementation
+- **[PySerial](https://pypi.org/project/pyserial/)**: Arduino communication
+- **[OpenCV](https://opencv.org/)**: Computer vision processing
+- Youtube tutorial for synthesizer: 
+    - https://www.youtube.com/watch?v=lx_L9dPIa78
+    - https://www.youtube.com/watch?v=hkBCYffNMX4
+- Generative AI including Github Copilot only used for code, comments, and document refining. NOT used in development.
+
+> Check `/doc` for detailed project write-up.
