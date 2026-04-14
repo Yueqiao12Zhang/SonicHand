@@ -1,5 +1,5 @@
-#define TRIG_PIN 10
-#define ECHO_PIN 9
+#define TRIG_PIN 12
+#define ECHO_PIN 11
 
 void setup() {
   Serial.begin(115200);

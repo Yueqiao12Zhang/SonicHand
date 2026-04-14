@@ -106,12 +106,10 @@ class ArduinoHandler:
         return None, None, None
     
     def disconnect(self):
-        """Close serial connection."""
         if self.ser:
             self.ser.close()
             self.is_connected = False
             print("✓ Disconnected from Arduino")
     
     def __del__(self):
-        """Cleanup on object destruction."""
         self.disconnect()

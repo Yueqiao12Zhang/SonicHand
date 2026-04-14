@@ -21,7 +21,8 @@ hand_landmarker = vision.HandLandmarker.create_from_options(options)
 gesture_classifier = GestureClassifier()
 
 # --- INITIALIZE ARDUINO HANDLER ---
-arduino = ArduinoHandler(port='/dev/cu.usbserial-1110', smooth_window=5)
+# Note: Update the port to match your system (e.g., 'COM3' on Windows or '/dev/ttyUSB0' on Linux)
+arduino = ArduinoHandler(port='/dev/tty.usbserial-140', smooth_window=5)
 arduino.connect()
 
 # --- INITIALIZE OSC MANAGER ---

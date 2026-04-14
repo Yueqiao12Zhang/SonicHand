@@ -1,7 +1,6 @@
 # Project Summary: Gesture-to-OSC Controller
 
-Updated: 2026-03-27
-Status: Production-ready baseline
+Updated: 2026-04-14
 
 ## What This System Does
 
@@ -16,10 +15,10 @@ into real-time OSC messages for PlugData/Pure Data synthesis control.
 /synth/pitch      0.0 to 1.0   (distance)
 /synth/mode       0 to 4       (gesture state)
 /synth/vibrato    0.0 to 1.0   (hand roll)
-/synth/volume     0.0 to 1.0   (safety gate)
+/synth/volume     0.0 and 1.0  (safety gate)
 /synth/panic      0 or 1       (shutdown/emergency)
 
-## Gesture Modes (Current)
+## Gesture Modes
 
 0 = Open hand
 1 = Closed fist

@@ -118,10 +118,6 @@ class GestureClassifier:
         extended_count = sum(fingers_extended)
         
         # Classification logic
-        # Open hand requires either:
-        # - all 4 non-thumb fingers extended, or
-        # - high roll + 3 non-thumb fingers + thumb extended
-        # This prevents 3-finger gestures (thumb folded) from being misclassified as open hand.
         is_open_hand = (
             extended_count >= 4
             or (
@@ -148,9 +144,10 @@ class GestureClassifier:
             return 3
         
         elif extended_count == 2 and index_extended and thumb_extended and middle_extended:
+            # Fist + Thumb + Index + Middle out
             return 4
         
-        # Default to closed fist if ambiguous
+        # Default to closed if ambiguous
         return 1
     
     def get_tilt_roll(self, landmarks):
